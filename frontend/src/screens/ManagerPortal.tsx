@@ -5,11 +5,7 @@ import { RootStackParamList } from '../navigation/types';
 
 type ManagerPortalNavigationProp = StackNavigationProp<RootStackParamList, 'ManagerPortal'>;
 
-interface Props {
-  navigation: ManagerPortalNavigationProp;
-}
-
-const ManagerPortal: React.FC<Props> = ({ navigation }) => {
+const ManagerPortal = ({ navigation }: { navigation: ManagerPortalNavigationProp }) => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Manager Portal</Text>

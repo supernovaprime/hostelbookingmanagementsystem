@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 import HomeScreen from '../screens/HomeScreen';
 import SuperAdminPortal from '../screens/SuperAdminPortal';
-import ManagerPortal from '../screens/ManagerPortal';
+import ManagerPortal from '../screens/ManagerPortal.tsx';
 import TenantPortal from '../screens/TenantPortal';
 
 const Stack = createStackNavigator<RootStackParamList>();
