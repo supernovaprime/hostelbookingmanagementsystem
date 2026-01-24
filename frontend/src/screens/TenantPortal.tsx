@@ -1,7 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
 
-const TenantPortal = ({ navigation }) => {
+type TenantPortalNavigationProp = StackNavigationProp<RootStackParamList, 'TenantPortal'>;
+
+interface Props {
+  navigation: TenantPortalNavigationProp;
+}
+
+const TenantPortal: React.FC<Props> = ({ navigation }) => {
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', onPress: () => navigation.navigate('Home') }
+      ]
+    );
+  };
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Tenant Portal</Text>

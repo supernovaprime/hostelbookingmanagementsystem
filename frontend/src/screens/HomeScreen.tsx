@@ -15,20 +15,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <Text style={styles.title}>Welcome to Hostel Booking</Text>
       <Text style={styles.subtitle}>Find and book hostels easily</Text>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('TenantPortal')}>
-        <Text style={styles.buttonText}>Browse Hostels</Text>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => navigation.navigate('SuperAdminPortal')}>
-        <Text style={[styles.buttonText, styles.secondaryButtonText]}>Super Admin Login</Text>
+      <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => navigation.navigate('Register')}>
+        <Text style={[styles.buttonText, styles.secondaryButtonText]}>Register</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.tertiaryButton]} onPress={() => navigation.navigate('ManagerPortal')}>
-        <Text style={[styles.buttonText, styles.tertiaryButtonText]}>Manager Login</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => navigation.navigate('TenantPortal')}>
-        <Text style={[styles.buttonText, styles.secondaryButtonText]}>Tenant Login</Text>
+      <TouchableOpacity style={[styles.button, styles.tertiaryButton]} onPress={() => navigation.navigate('TenantPortal')}>
+        <Text style={[styles.buttonText, styles.tertiaryButtonText]}>Browse as Guest</Text>
       </TouchableOpacity>
     </View>
   );
