@@ -4,8 +4,8 @@ const path = require('path');
 
 // Configuration
 const CONFIG = {
-  sourceIcon: path.join(__dirname, '../assets/icon.png'),
-  sourceLogo: path.join(__dirname, '../assets/logo.png'),
+  sourceIcon: path.join(__dirname, '../../assets/main/icon.png'),
+  sourceLogo: path.join(__dirname, '../../assets/main/logo.png'),
   outputDir: path.join(__dirname, '../assets/generated'),
   appDir: path.join(__dirname, '../mobile/assets'),
 };
