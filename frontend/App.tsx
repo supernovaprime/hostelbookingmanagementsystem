@@ -1,5 +1,6 @@
 import React from 'react';
-import { StatusBar, View, StyleSheet, Platform } from 'expo-status-bar';
+import { StatusBar } from 'expo-status-bar';
+import { View, StyleSheet, Platform } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -17,9 +18,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     ...(Platform.OS === 'web' && {
-      maxWidth: '45%',
+      width: '45%',
       alignSelf: 'center',
-      width: '100%',
     }),
   },
 });
