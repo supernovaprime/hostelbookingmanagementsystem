@@ -1,16 +1,20 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, Platform } from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
+import { NavigationContainer } from '@react-navigation/native';
+import { AuthProvider } from './src/contexts/AuthContext';
+import RoleBasedNavigator from './src/navigation/RoleBasedNavigator';
 
 export default function App() {
   return (
-    <>
-      <View style={styles.container}>
-        <AppNavigator />
-      </View>
-      <StatusBar style="auto" />
-    </>
+    <AuthProvider>
+      <NavigationContainer>
+        <View style={styles.container}>
+          <RoleBasedNavigator />
+        </View>
+        <StatusBar style="auto" />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
 
