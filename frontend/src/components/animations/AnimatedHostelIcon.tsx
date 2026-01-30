@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
-import { MaterialIcons } from 'expo/vector-icons';
+import { View, Animated, StyleSheet, Text } from 'react-native';
 
 interface AnimatedHostelIconProps {
   size?: number;
@@ -73,7 +72,7 @@ const AnimatedHostelIcon: React.FC<AnimatedHostelIconProps> = ({
           },
         ]}
       >
-        <MaterialIcons name="home" size={size} color={color} />
+        <Text style={[styles.emoji, { fontSize: size, color }]}>🏠</Text>
       </Animated.View>
     </View>
   );
@@ -87,6 +86,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emoji: {
+    textAlign: 'center',
   },
 });
 

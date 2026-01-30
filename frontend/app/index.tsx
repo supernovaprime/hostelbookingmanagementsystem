@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/types';
-import AnimatedHostelIcon from '../components/animations/AnimatedHostelIcon';
-import FloatingElements from '../components/animations/FloatingElements';
-import PulseButton from '../components/animations/PulseButton';
+import { useRouter } from 'expo-router';
+import AnimatedHostelIcon from '../src/components/animations/AnimatedHostelIcon';
+import FloatingElements from '../src/components/animations/FloatingElements';
+import PulseButton from '../src/components/animations/PulseButton';
 
 const { width, height } = Dimensions.get('window');
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
-
-interface Props {
-  navigation: HomeScreenNavigationProp;
-}
-
-const HomeScreen: React.FC<Props> = ({ navigation }) => {
+export default function HomeScreen() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -69,19 +63,19 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.buttonContainer}>
           <PulseButton
             title="Login"
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => router.push('/login')}
             style={styles.primaryButton}
             pulseColor="#FF8C00"
           />
           <PulseButton
             title="Register"
-            onPress={() => navigation.navigate('Register')}
+            onPress={() => router.push('/register')}
             style={styles.secondaryButton}
             pulseColor="#007AFF"
           />
           <PulseButton
             title="Browse as Guest"
-            onPress={() => navigation.navigate('TenantPortal')}
+            onPress={() => router.push('/tenant')}
             style={styles.tertiaryButton}
             pulseColor="#00CED1"
           />
@@ -89,7 +83,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -207,5 +201,3 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 });
-
-export default HomeScreen;
