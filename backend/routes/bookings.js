@@ -129,6 +129,65 @@ router.put('/:id/status', [
   }
 });
 
+// Get available rooms for a hostel (Public - for booking)
+router.get('/available-rooms/:hostelId', [
+  body('checkInDate').optional().isISO8601().withMessage('Valid check-in date required'),
+  body('checkOutDate').optional().isISO8601().withMessage('Valid check-out date required'),
+  body('numberOfGuests').optional().isInt({ min: 1 }).withMessage('Number of guests must be at least 1')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { hostelId } = req.params;
+    const { checkInDate, checkOutDate, numberOfGuests } = req.query;
+
+    // Build query for available rooms
+    let query = {
+      hostel: hostelId,
+      isAvailable: true,
+      isBlocked: false
+    };
+
+    // If dates are provided, check for conflicts
+    if (checkInDate && checkOutDate) {
+      const conflictingBookings = await Booking.find({
+        room: { $exists: true },
+        $or: [
+          {
+            checkInDate: { $lt: new Date(checkOutDate) },
+            checkOutDate: { $gt: new Date(checkInDate) }
+          }
+        ],
+        status: { $nin: ['cancelled', 'rejected'] }
+      }).select('room');
+
+      const bookedRoomIds = conflictingBookings.map(booking => booking.room);
+      query._id = { $nin: bookedRoomIds };
+    }
+
+    // If number of guests specified, filter by capacity
+    if (numberOfGuests) {
+      query.capacity = { $gte: parseInt(numberOfGuests) };
+    }
+
+    const availableRooms = await Room.find(query)
+      .populate('hostel', 'name address')
+      .sort({ price: 1, roomNumber: 1 });
+
+    res.json({
+      message: 'Available rooms retrieved successfully',
+      rooms: availableRooms,
+      total: availableRooms.length
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Cancel booking (Tenant only - own booking)
 router.put('/:id/cancel', [
   auth,

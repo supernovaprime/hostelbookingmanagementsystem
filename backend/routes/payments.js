@@ -235,7 +235,7 @@ router.post('/initialize-mobile', auth, [
     const existingPayment = await Payment.findOne({
       booking: bookingId,
       type,
-      status: { $in: ['pending', 'processing', 'completed'] }
+      status: { $in: ['awaiting_approval', 'pending', 'processing', 'completed'] }
     });
 
     if (existingPayment) {
@@ -250,7 +250,7 @@ router.post('/initialize-mobile', auth, [
       amount: { value: amount, currency: 'GHS' },
       type,
       method: { type: 'mobile_money', provider: network, phoneNumber },
-      status: 'pending',
+      status: 'awaiting_approval',
       metadata: {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
@@ -261,57 +261,19 @@ router.post('/initialize-mobile', auth, [
 
     await payment.save();
 
-    // Initialize mobile money payment (using Paystack's mobile money support)
-    const paystackResponse = await paystack.transaction.initialize({
-      amount: Math.round(amount * 100), // Convert to pesewas/kobo
-      email: req.user.email,
-      callback_url: `${process.env.FRONTEND_URL}/payment/callback`,
-      reference: payment.reference,
-      mobile_money: {
-        phone: phoneNumber,
-        provider: network
-      },
-      metadata: {
-        paymentId: payment._id,
-        bookingId: bookingId,
-        userId: req.user._id,
-        type,
-        paymentMethod: 'mobile_money',
-        network,
-        custom_fields: [
-          {
-            display_name: "Payment Reference",
-            variable_name: "reference",
-            value: payment.reference
-          },
-          {
-            display_name: "Booking ID",
-            variable_name: "bookingId",
-            value: bookingId
-          },
-          {
-            display_name: "Network",
-            variable_name: "network",
-            value: network
-          }
-        ]
-      }
-    });
-
-    // Update payment with transaction ID
-    payment.transactionId = paystackResponse.data.reference;
-    await payment.save();
+    // Send notification to hostel manager for approval
+    await notifyManagerForApproval(payment, booking);
 
     res.json({
-      message: 'Mobile money payment initialized successfully',
+      message: 'Mobile money payment submitted for approval. You will be notified once approved.',
       payment: {
         id: payment._id,
         reference: payment.reference,
         amount: payment.amount,
         type: payment.type,
-        method: payment.method
-      },
-      paystack: paystackResponse.data
+        method: payment.method,
+        status: payment.status
+      }
     });
   } catch (error) {
     console.error('Mobile money payment initialization error:', error);
@@ -332,6 +294,246 @@ async function sendSMS(to, message) {
   } catch (error) {
     console.error('SMS sending failed:', error);
     throw error;
+  }
+}
+
+// Manager approve payment
+router.post('/approve/:paymentId', authenticateToken, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { notes } = req.body;
+
+    // Find payment
+    const payment = await Payment.findById(paymentId).populate('booking tenant hostel');
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    // Check if user is manager of the hostel
+    if (req.user.role !== 'manager' || payment.hostel.manager.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized to approve this payment' });
+    }
+
+    if (payment.approval.status !== 'pending') {
+      return res.status(400).json({ message: 'Payment is not pending approval' });
+    }
+
+    // Update approval status
+    payment.approval.status = 'approved';
+    payment.approval.approvedBy = req.user._id;
+    payment.approval.approvedAt = new Date();
+    payment.approval.notes = notes;
+    payment.status = 'pending'; // Now ready for processing
+
+    await payment.save();
+
+    // Process the payment with Paystack
+    await processApprovedPayment(payment);
+
+    // Send notification to tenant
+    await sendPaymentApprovalNotification(payment, payment.booking, 'approved');
+
+    res.json({
+      message: 'Payment approved successfully',
+      payment: {
+        id: payment._id,
+        status: payment.status,
+        approval: payment.approval
+      }
+    });
+  } catch (error) {
+    console.error('Payment approval error:', error);
+    res.status(500).json({ message: 'Payment approval failed', error: error.message });
+  }
+});
+
+// Manager reject payment
+router.post('/reject/:paymentId', authenticateToken, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { rejectionReason, notes } = req.body;
+
+    // Find payment
+    const payment = await Payment.findById(paymentId).populate('booking tenant hostel');
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    // Check if user is manager of the hostel
+    if (req.user.role !== 'manager' || payment.hostel.manager.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized to reject this payment' });
+    }
+
+    if (payment.approval.status !== 'pending') {
+      return res.status(400).json({ message: 'Payment is not pending approval' });
+    }
+
+    // Update approval status
+    payment.approval.status = 'rejected';
+    payment.approval.approvedBy = req.user._id;
+    payment.approval.approvedAt = new Date();
+    payment.approval.rejectionReason = rejectionReason;
+    payment.approval.notes = notes;
+    payment.status = 'cancelled';
+
+    await payment.save();
+
+    // Send notification to tenant
+    await sendPaymentApprovalNotification(payment, payment.booking, 'rejected');
+
+    res.json({
+      message: 'Payment rejected',
+      payment: {
+        id: payment._id,
+        status: payment.status,
+        approval: payment.approval
+      }
+    });
+  } catch (error) {
+    console.error('Payment rejection error:', error);
+    res.status(500).json({ message: 'Payment rejection failed', error: error.message });
+  }
+});
+
+// Get payments pending approval for manager
+router.get('/pending-approval', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'manager') {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
+    const payments = await Payment.find({
+      hostel: { $in: req.user.managedHostels },
+      'approval.status': 'pending'
+    }).populate('booking tenant hostel');
+
+    res.json({ payments });
+  } catch (error) {
+    console.error('Get pending payments error:', error);
+    res.status(500).json({ message: 'Failed to fetch pending payments', error: error.message });
+  }
+});
+
+// Process approved payment
+async function processApprovedPayment(payment) {
+  try {
+    if (payment.method.type === 'mobile_money') {
+      // Initialize Paystack mobile money payment
+      const paystackResponse = await paystack.transaction.initialize({
+        amount: Math.round(payment.amount.value * 100),
+        email: payment.tenant.email,
+        callback_url: `${process.env.FRONTEND_URL}/payment/callback`,
+        reference: payment.reference,
+        mobile_money: {
+          phone: payment.method.details.phoneNumber,
+          provider: payment.method.provider
+        },
+        metadata: {
+          paymentId: payment._id,
+          bookingId: payment.booking._id,
+          userId: payment.tenant._id,
+          type: payment.type,
+          paymentMethod: 'mobile_money',
+          network: payment.method.provider,
+          custom_fields: [
+            {
+              display_name: "Payment Reference",
+              variable_name: "reference",
+              value: payment.reference
+            },
+            {
+              display_name: "Booking ID",
+              variable_name: "bookingId",
+              value: payment.booking._id
+            }
+          ]
+        }
+      });
+
+      payment.transactionId = paystackResponse.data.reference;
+      await payment.save();
+    }
+  } catch (error) {
+    console.error('Process approved payment error:', error);
+    throw error;
+  }
+}
+
+// Notify manager for approval
+async function notifyManagerForApproval(payment, booking) {
+  try {
+    const manager = await User.findById(booking.hostel.manager);
+    if (!manager) return;
+
+    const notification = new Notification({
+      recipient: manager._id,
+      type: 'payment_approval_required',
+      title: 'Payment Approval Required',
+      message: `A payment of GHS ${payment.amount.value} from ${payment.tenant.firstName} ${payment.tenant.lastName} for ${booking.hostel.name} requires your approval.`,
+      data: {
+        paymentId: payment._id,
+        bookingId: booking._id,
+        tenantId: payment.tenant._id,
+        amount: payment.amount.value,
+        reference: payment.reference
+      },
+      channels: ['in_app'],
+      priority: 'high'
+    });
+
+    await notification.save();
+  } catch (error) {
+    console.error('Manager notification error:', error);
+  }
+}
+
+// Send payment approval notification
+async function sendPaymentApprovalNotification(payment, booking, status) {
+  try {
+    const tenant = await User.findById(payment.tenant);
+    if (!tenant) return;
+
+    let message = '';
+    let title = '';
+
+    if (status === 'approved') {
+      title = 'Payment Approved';
+      message = `Hi ${tenant.firstName}, your payment of GHS ${payment.amount.value} for ${booking.hostel.name} has been approved and is being processed. Reference: ${payment.reference}`;
+
+      // Send SMS for approval
+      if (tenant.phoneNumber) {
+        await sendSMS(tenant.phoneNumber, message);
+      }
+    } else if (status === 'rejected') {
+      title = 'Payment Rejected';
+      message = `Hi ${tenant.firstName}, your payment of GHS ${payment.amount.value} for ${booking.hostel.name} has been rejected. Reason: ${payment.approval.rejectionReason}. Reference: ${payment.reference}`;
+
+      // Send SMS for rejection
+      if (tenant.phoneNumber) {
+        await sendSMS(tenant.phoneNumber, message);
+      }
+    }
+
+    // Create in-app notification
+    const notification = new Notification({
+      recipient: tenant._id,
+      type: status === 'approved' ? 'payment_approved' : 'payment_rejected',
+      title,
+      message,
+      data: {
+        paymentId: payment._id,
+        bookingId: booking._id,
+        amount: payment.amount.value,
+        reference: payment.reference,
+        rejectionReason: payment.approval.rejectionReason
+      },
+      channels: ['in_app', 'sms'],
+      priority: 'high'
+    });
+
+    await notification.save();
+  } catch (error) {
+    console.error('Approval notification sending failed:', error);
   }
 }
 

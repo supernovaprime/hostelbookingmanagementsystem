@@ -25,6 +25,10 @@ const AppNavigator = () => {
         <Stack.Screen name="SuperAdminPortal" component={SuperAdminPortal} options={{ title: 'Super Admin Portal' }} />
         <Stack.Screen name="ManagerPortal" component={ManagerPortal} options={{ title: 'Manager Portal' }} />
         <Stack.Screen name="TenantPortal" component={TenantPortal} options={{ title: 'Tenant Portal' }} />
+        <Stack.Screen name="Messages" component={MessagesScreen} options={{ title: 'Messages' }} />
+        <Stack.Screen name="ComposeMessage" component={ComposeMessageScreen} options={{ title: 'Compose Message' }} />
+        <Stack.Screen name="MessageDetail" component={MessageDetailScreen} options={{ title: 'Message Details' }} />
+        <Stack.Screen name="RoomSelection" component={RoomSelectionScreen} options={{ title: 'Select Room' }} />
         <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Payment' }} />
       </Stack.Navigator>
     </NavigationContainer>

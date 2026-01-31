@@ -7,4 +7,9 @@ export type RootStackParamList = {
   SuperAdminPortal: undefined;
   ManagerPortal: undefined;
   TenantPortal: undefined;
+  Messages: undefined;
+  ComposeMessage: undefined;
+  MessageDetail: { conversationId: string };
+  RoomSelection: { hostelId: string; checkInDate: Date; checkOutDate: Date; numberOfGuests: number };
+  Payment: { bookingData: any };
 };
