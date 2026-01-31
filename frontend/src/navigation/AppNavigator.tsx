@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
-import HomeScreen from '../screens/HomeScreenSimple';
+import HomeScreen from '../screens/HomeScreen';
 import  LoginScreen  from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -25,6 +25,7 @@ const AppNavigator = () => {
         <Stack.Screen name="SuperAdminPortal" component={SuperAdminPortal} options={{ title: 'Super Admin Portal' }} />
         <Stack.Screen name="ManagerPortal" component={ManagerPortal} options={{ title: 'Manager Portal' }} />
         <Stack.Screen name="TenantPortal" component={TenantPortal} options={{ title: 'Tenant Portal' }} />
+        <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Payment' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

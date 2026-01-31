@@ -40,11 +40,55 @@ router.post('/', [
   }
 });
 
-// Get all hostels (Public)
+// Get all hostels (Public) - with available rooms filter
 router.get('/', async (req, res) => {
   try {
-    const hostels = await Hostel.find({ isActive: true }).populate('manager', 'name email');
-    res.json(hostels);
+    const { availableOnly = 'false', limit = 10, page = 1 } = req.query;
+
+    let query = { isActive: true };
+
+    if (availableOnly === 'true') {
+      // Find hostels that have available rooms
+      const Room = require('../models/Room');
+      const hostelsWithRooms = await Room.distinct('hostel', { isAvailable: true });
+      query._id = { $in: hostelsWithRooms };
+    }
+
+    const hostels = await Hostel.find(query)
+      .populate('manager', 'name email')
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ 'rating.average': -1, createdAt: -1 });
+
+    // Get room details for each hostel
+    const hostelsWithRooms = await Promise.all(
+      hostels.map(async (hostel) => {
+        const Room = require('../models/Room');
+        const rooms = await Room.find({
+          hostel: hostel._id,
+          isAvailable: true
+        }).select('type capacity price amenities').sort({ 'price.baseAmount': 1 });
+
+        return {
+          ...hostel.toObject(),
+          availableRooms: rooms,
+          minPrice: rooms.length > 0 ? Math.min(...rooms.map(r => r.price.baseAmount)) : 0,
+          maxPrice: rooms.length > 0 ? Math.max(...rooms.map(r => r.price.baseAmount)) : 0
+        };
+      })
+    );
+
+    const total = await Hostel.countDocuments(query);
+
+    res.json({
+      hostels: hostelsWithRooms,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
