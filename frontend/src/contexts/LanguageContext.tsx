@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
 
+type SupportedLanguage = keyof typeof translations;
+type TranslationKey = keyof typeof translations.en;
+
 interface LanguageContextType {
-  language: string;
-  setLanguage: (lang: string) => void;
-  t: (key: string) => string;
+  language: SupportedLanguage;
+  setLanguage: (lang: SupportedLanguage) => void;
+  t: (key: TranslationKey) => string;
   isPremiumFeature: boolean;
 }
 
@@ -14,8 +17,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 interface LanguageProviderProps {
   children: ReactNode;
 }
-
-type TranslationKey = keyof typeof translations.en;
 
 const translations = {
   en: {
@@ -34,6 +35,7 @@ const translations = {
     'common.yes': 'Yes',
     'common.no': 'No',
     'common.ok': 'OK',
+    'common.manager': 'Manager',
 
     // Navigation
     'nav.home': 'Home',
@@ -124,6 +126,7 @@ const translations = {
     'common.yes': 'Sí',
     'common.no': 'No',
     'common.ok': 'OK',
+    'common.manager': 'Manager',
 
     // Navigation
     'nav.home': 'Inicio',
@@ -214,6 +217,7 @@ const translations = {
     'common.yes': 'Oui',
     'common.no': 'Non',
     'common.ok': 'OK',
+    'common.manager': 'Directeur',
 
     // Navigation
     'nav.home': 'Accueil',
@@ -291,7 +295,7 @@ const translations = {
 };
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState('en');
+  const [language, setLanguageState] = useState<SupportedLanguage>('en');
   const [isPremiumFeature, setIsPremiumFeature] = useState(false);
   const { user, token } = useAuth();
 
@@ -303,8 +307,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const loadLanguagePreference = async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem('userLanguage');
-      if (savedLanguage && translations[savedLanguage as keyof typeof translations]) {
-        setLanguageState(savedLanguage);
+      if (savedLanguage && translations[savedLanguage as SupportedLanguage]) {
+        setLanguageState(savedLanguage as SupportedLanguage);
       }
     } catch (error) {
       console.error('Error loading language preference:', error);
@@ -335,7 +339,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
   };
 
-  const setLanguage = async (lang: string) => {
+  const setLanguage = async (lang: SupportedLanguage) => {
     if (translations[lang]) {
       setLanguageState(lang);
       try {
@@ -346,8 +350,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
   };
 
-  const t = (key: string): string => {
-    return translations[language]?.[key] || translations.en[key] || key;
+  const t = (key: TranslationKey): string => {
+    const currentTranslations = translations[language];
+    return currentTranslations?.[key] || translations.en[key] || key;
   };
 
   const value: LanguageContextType = {

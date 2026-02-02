@@ -10,6 +10,7 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import SuperAdminPortal from '../screens/SuperAdminPortal';
 import ManagerPortal from '../screens/ManagerPortal';
+import PaymentApprovalScreen from '../screens/PaymentApprovalScreen';
 import TenantPortal from '../screens/TenantPortal';
 
 export type RootStackParamList = {
@@ -21,6 +22,7 @@ export type RootStackParamList = {
   SuperAdminPortal: undefined;
   ManagerPortal: undefined;
   TenantPortal: undefined;
+  PaymentApproval: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -120,6 +122,14 @@ const RoleBasedNavigator: React.FC = () => {
             options={{
               title: 'Manager Portal',
               gestureEnabled: false,
+            }}
+          />,
+          <Stack.Screen
+            key="PaymentApproval"
+            name="PaymentApproval"
+            component={PaymentApprovalScreen}
+            options={{
+              title: 'Payment Approvals',
             }}
           />,
         ];

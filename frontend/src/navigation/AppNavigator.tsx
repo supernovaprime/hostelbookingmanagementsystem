@@ -10,6 +10,11 @@ import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import SuperAdminPortal from '../screens/SuperAdminPortal';
 import ManagerPortal from '../screens/ManagerPortal';
 import TenantPortal from '../screens/TenantPortal';
+import MessagesScreen from '../screens/MessagesScreen';
+import ComposeMessageScreen from '../screens/ComposeMessageScreen';
+import MessageDetailScreen from '../screens/MessageDetailScreen';
+import RoomSelectionScreen from '../screens/RoomSelectionScreen';
+import PaymentScreen from '../screens/PaymentScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 

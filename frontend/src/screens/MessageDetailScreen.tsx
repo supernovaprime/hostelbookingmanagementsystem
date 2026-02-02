@@ -61,7 +61,7 @@ const MessageDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   useEffect(() => {
     fetchConversation();
@@ -71,7 +71,7 @@ const MessageDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       const response = await fetch(`http://localhost:5000/api/messages/conversation/${conversationId}`, {
         headers: {
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token || ''}`,
         },
       });
 
@@ -109,7 +109,7 @@ const MessageDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           recipient: user?.id === originalMessage.sender._id ? originalMessage.recipient._id : originalMessage.sender._id,

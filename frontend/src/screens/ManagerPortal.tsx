@@ -23,6 +23,13 @@ const ManagerPortal = ({ navigation }: { navigation: ManagerPortalNavigationProp
         <Text style={[styles.buttonText, styles.tertiaryButtonText]}>Booking Requests</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.button, styles.secondaryButton]}
+        onPress={() => navigation.navigate('PaymentApproval')}
+      >
+        <Text style={[styles.buttonText, styles.secondaryButtonText]}>Payment Approvals</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
         <Text style={[styles.buttonText, styles.secondaryButtonText]}>Financial Reports</Text>
       </TouchableOpacity>

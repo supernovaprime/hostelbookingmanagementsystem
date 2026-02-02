@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,16 @@ import {
   Modal,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/types';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-type PremiumModalNavigationProp = StackNavigationProp<RootStackParamList, 'Messages'>;
+type PremiumModalNavigationProp = StackNavigationProp<RootStackParamList, keyof RootStackParamList>;
 
 interface Props {
   visible: boolean;
@@ -22,11 +25,49 @@ interface Props {
 }
 
 const PremiumModal: React.FC<Props> = ({ visible, onClose, navigation, feature }) => {
-  const handleUpgradePress = () => {
-    onClose();
-    // Navigate to premium subscription screen (to be implemented)
-    // For now, just show an alert
-    alert('Premium subscription feature coming soon!');
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const { token } = useAuth();
+
+  const handleUpgradePress = async () => {
+    setIsUpgrading(true);
+    try {
+      // Call the backend to create a premium subscription
+      const response = await fetch('http://localhost:5000/api/subscriptions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          planType: 'premium',
+          billingCycle: 'monthly',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert(
+          'Success!',
+          'Your premium subscription has been activated! You now have access to all premium features.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                onClose();
+                // Optionally navigate to a success screen or refresh the app state
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Error', data.message || 'Failed to activate premium subscription. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const getFeatureDescription = (feature: string) => {

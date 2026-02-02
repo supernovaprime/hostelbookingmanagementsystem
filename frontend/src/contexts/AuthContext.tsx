@@ -94,11 +94,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const { token: authToken, user: userData } = data;
 
+      // Map backend _id to frontend id
+      const mappedUserData = {
+        ...userData,
+        id: userData._id || userData.id,
+      };
+
       await AsyncStorage.setItem('authToken', authToken);
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+      await AsyncStorage.setItem('userData', JSON.stringify(mappedUserData));
 
       setToken(authToken);
-      setUser(userData);
+      setUser(mappedUserData);
     } catch (error) {
       throw error;
     } finally {

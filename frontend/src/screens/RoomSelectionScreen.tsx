@@ -40,7 +40,7 @@ const RoomSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   useEffect(() => {
     fetchAvailableRooms();
@@ -58,7 +58,7 @@ const RoomSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
         `http://localhost:5000/api/bookings/available-rooms/${hostelId}?${queryParams}`,
         {
           headers: {
-            'Authorization': `Bearer ${user?.token}`,
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
@@ -86,14 +86,14 @@ const RoomSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
+    // TODO: Create booking first and get bookingId
+    const totalAmount = calculateTotalAmount(selectedRoom);
+
     navigation.navigate('Payment', {
-      bookingData: {
-        roomId: selectedRoom._id,
-        checkInDate,
-        checkOutDate,
-        numberOfGuests,
-        totalAmount: calculateTotalAmount(selectedRoom),
-      },
+      bookingId: 'temp_booking_id', // This should be replaced with actual booking ID from API
+      amount: totalAmount,
+      type: 'booking_payment',
+      description: `Room booking for ${selectedRoom.roomNumber} (${checkInDate.toDateString()} - ${checkOutDate.toDateString()})`,
     });
   };
 

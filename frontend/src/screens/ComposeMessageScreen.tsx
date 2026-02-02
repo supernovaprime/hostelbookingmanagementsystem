@@ -59,8 +59,8 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
   const [sending, setSending] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState('');
-  const { user } = useAuth();
-  const { t, isPremiumFeature } = useLanguage();
+  const { user, token } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchHostels();
@@ -71,7 +71,7 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const response = await fetch('http://localhost:5000/api/hostels', {
         headers: {
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -92,7 +92,7 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const response = await fetch(`http://localhost:5000/api/subscriptions/has-feature/${feature}`, {
         headers: {
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -176,12 +176,13 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
         copyToCacheDirectory: true,
       });
 
-      if (result.type === 'success') {
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
         const attachment: Attachment = {
-          uri: result.uri,
-          name: result.name,
-          type: result.mimeType || 'application/octet-stream',
-          size: result.size || 0,
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || 'application/octet-stream',
+          size: asset.size || 0,
         };
 
         if (attachment.size > 50 * 1024 * 1024) { // 50MB
@@ -257,7 +258,7 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
       const response = await fetch('http://localhost:5000/api/messages', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token}`,
           // Don't set Content-Type for FormData
         },
         body: formData,
@@ -452,7 +453,7 @@ const ComposeMessageScreen: React.FC<Props> = ({ navigation }) => {
       <PremiumModal
         visible={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
-        navigation={navigation}
+        navigation={navigation as any}
         feature={premiumFeature}
       />
     </ScrollView>
